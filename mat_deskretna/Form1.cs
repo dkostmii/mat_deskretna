@@ -26,12 +26,12 @@ namespace mat_deskretna
         {
             string text_start = text.Text;
             string[] result = text_start.Split(new string[] { "nie", "jeśli", "to", "i", "lub" }, StringSplitOptions.RemoveEmptyEntries);
-          
-            try
-            {
-                p_label.Text = "p = " + result[0];
-                q_label.Text = "q = " + result[1];
-                r_label.Text = "r = " + result[2];
+
+              try
+              {
+                  p_label.Text = "p = " + result[0];
+                  q_label.Text = "q = " + result[1];
+                  r_label.Text = "r = " + result[2];
 
                 rezalt_panal.Visible = true;
                 panal_p_q_r.Visible = true;
@@ -47,7 +47,9 @@ namespace mat_deskretna
 
         private void Go_button_KeyPress(object sender, KeyPressEventArgs e)
         {
-           Go_button_Click( sender, e);
+           this.Go_button_Click( sender, e);
         }
+
+      
     }
 }
