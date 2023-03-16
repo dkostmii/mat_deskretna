@@ -48,11 +48,13 @@ namespace mat_deskretna
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.rezalt_panal = new System.Windows.Forms.Panel();
             this.rezalt_text = new System.Windows.Forms.Label();
+            this.dataGridView1 = new System.Windows.Forms.DataGridView();
             this.panel1.SuspendLayout();
             this.panal_p_q_r.SuspendLayout();
             this.down.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.rezalt_panal.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.SuspendLayout();
             // 
             // text
@@ -64,7 +66,6 @@ namespace mat_deskretna
             this.text.Name = "text";
             this.text.Size = new System.Drawing.Size(400, 27);
             this.text.TabIndex = 0;
-            this.text.TextChanged += new System.EventHandler(this.text_TextChanged);
             // 
             // panel1
             // 
@@ -149,7 +150,6 @@ namespace mat_deskretna
             this.Go_button.Text = "Go";
             this.Go_button.UseVisualStyleBackColor = false;
             this.Go_button.Click += new System.EventHandler(this.Go_button_Click);
-            this.Go_button.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.Go_button_KeyPress);
             // 
             // panal_p_q_r
             // 
@@ -239,6 +239,16 @@ namespace mat_deskretna
             this.rezalt_text.Text = "w(...)";
             this.rezalt_text.TextAlign = System.Drawing.ContentAlignment.BottomLeft;
             // 
+            // dataGridView1
+            // 
+            this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dataGridView1.Location = new System.Drawing.Point(300, 432);
+            this.dataGridView1.Name = "dataGridView1";
+            this.dataGridView1.RowHeadersWidth = 51;
+            this.dataGridView1.RowTemplate.Height = 29;
+            this.dataGridView1.Size = new System.Drawing.Size(300, 188);
+            this.dataGridView1.TabIndex = 8;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
@@ -247,6 +257,7 @@ namespace mat_deskretna
             this.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("$this.BackgroundImage")));
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             this.ClientSize = new System.Drawing.Size(982, 653);
+            this.Controls.Add(this.dataGridView1);
             this.Controls.Add(this.rezalt_panal);
             this.Controls.Add(this.pictureBox1);
             this.Controls.Add(this.down);
@@ -259,6 +270,7 @@ namespace mat_deskretna
             this.MinimumSize = new System.Drawing.Size(1000, 700);
             this.Name = "Form1";
             this.Text = "Zut Matematyka dyskretna";
+            this.Load += new System.EventHandler(this.Form1_Load);
             this.panel1.ResumeLayout(false);
             this.panel1.PerformLayout();
             this.panal_p_q_r.ResumeLayout(false);
@@ -268,6 +280,7 @@ namespace mat_deskretna
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.rezalt_panal.ResumeLayout(false);
             this.rezalt_panal.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -293,6 +306,7 @@ namespace mat_deskretna
         private System.Windows.Forms.PictureBox pictureBox1;
         private System.Windows.Forms.Panel rezalt_panal;
         private System.Windows.Forms.Label rezalt_text;
+        private System.Windows.Forms.DataGridView dataGridView1;
     }
 }
 
