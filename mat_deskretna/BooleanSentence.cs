@@ -34,9 +34,13 @@ namespace mat_deskretna
                 { "jesli", BooleanExpression.NOT },
                 { "to", BooleanExpression.OR },
                 { "wtedy i tylko wtedy", BooleanExpression.XOR }
-            };
+            }.Select(kv =>
+            {
+                return KeyValuePair.Create(kv.Key.Surround(" "), kv.Value.Surround(" "));
+            })
+            .ToDictionary(kv => kv.Key, kv => kv.Value);
 
-            sentencePattern = new Regex(@"^[\p{L}\p{P}\s\(\)]+$");
+            sentencePattern = new Regex(@"^[\p{L}\p{N}\p{P}\s\(\)]+$");
 
             _transformed = "";
             _parameters = Array.Empty<string>();
@@ -57,9 +61,9 @@ namespace mat_deskretna
             {
                 var before = split
                     .Take(id - 1)
-                    .Concat(new[] { BooleanExpression.NOT, split[id - 1] });
+                    .Concat(new[] { BooleanExpression.NOT.Surround(" "), split[id - 1] });
 
-                var after = new[] { split[id], BooleanExpression.NOT, split[id + 1] }
+                var after = new[] { split[id], BooleanExpression.NOT.Surround(" "), split[id + 1] }
                     .Concat(split.Skip(id + 2));
 
                 result = before.Concat(after).ToArray();

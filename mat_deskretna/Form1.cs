@@ -32,9 +32,9 @@ namespace mat_deskretna
             DataTable table = new DataTable();
 
             // добавляем столбцы для переменных и результата
-            table.Columns.Add("A", typeof(bool));
-            table.Columns.Add("B", typeof(bool));
-            table.Columns.Add("C", typeof(bool));
+            table.Columns.Add(expr.Parameters[0], typeof(bool));
+            table.Columns.Add(expr.Parameters[1], typeof(bool));
+            table.Columns.Add(expr.Parameters[2], typeof(bool));
             table.Columns.Add("Result", typeof(bool));
 
             // создаем массив значений для всех возможных комбинаций переменных
@@ -61,9 +61,9 @@ namespace mat_deskretna
                 // вычисляем логическое выражение
                 result = interpreter.Eval<bool>(expr.Transformed, new[]
                 {
-                    new Parameter("A", a),
-                    new Parameter("B", b),
-                    new Parameter("C", c)
+                    new Parameter(expr.Parameters[0], a),
+                    new Parameter(expr.Parameters[1], b),
+                    new Parameter(expr.Parameters[2], c)
                 });
 
                 // добавляем строку с результатом в таблицу
@@ -85,11 +85,16 @@ namespace mat_deskretna
                 }
 
                 var expr = BooleanExpression.From(sentence.Transformed);
+
+                // FIXME: Convert getter to method
+                var exprTransformed = expr.Transformed;
+                var exprParameters = expr.Parameters;
+
                 var interpreter = new Interpreter();
 
-                p_label.Text = "p = " + sentence.Parameters[0];
-                q_label.Text = "q = " + sentence.Parameters[1];
-                r_label.Text = "r = " + sentence.Parameters[2];
+                p_label.Text = exprParameters[0] + " = " + sentence.Parameters[0];
+                q_label.Text = exprParameters[1] + " = " + sentence.Parameters[1];
+                r_label.Text = exprParameters[2] + " = " + sentence.Parameters[2];
 
                 rezalt_panal.Visible = true;
                 panal_p_q_r.Visible = true;
@@ -102,9 +107,9 @@ namespace mat_deskretna
 
                 // создание таблицы и заполнение ее данными
                 DataTable table = new DataTable();
-                table.Columns.Add("A", typeof(bool));
-                table.Columns.Add("B", typeof(bool));
-                table.Columns.Add("C", typeof(bool));
+                table.Columns.Add(exprParameters[0], typeof(bool));
+                table.Columns.Add(exprParameters[1], typeof(bool));
+                table.Columns.Add(exprParameters[2], typeof(bool));
                 table.Columns.Add("Result", typeof(bool));
 
                 // вычисление значения логического уравнения для всех комбинаций значений переменных A, B, и C
@@ -113,13 +118,13 @@ namespace mat_deskretna
                     A = (i & 4) != 0;
                     B = (i & 2) != 0;
                     C = (i & 1) != 0;
-                    //result_ = A && B || !C;
+                    rezalt_text.Text = exprTransformed;
 
-                    result = interpreter.Eval<bool>(expr.Transformed, new[]
+                    result = interpreter.Eval<bool>(exprTransformed, new[]
                     {
-                        new Parameter(expr.Parameters[0], A),
-                        new Parameter(expr.Parameters[1], B),
-                        new Parameter(expr.Parameters[2], C),
+                        new Parameter(exprParameters[0], A),
+                        new Parameter(exprParameters[1], B),
+                        new Parameter(exprParameters[2], C),
                     });
 
                     table.Rows.Add(A, B, C, result);

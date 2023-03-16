@@ -40,7 +40,46 @@ namespace mat_deskretna
             _transformed = "";
             _parameters = Array.Empty<string>();
 
-            exprPattern = new Regex(@"^[A-Za-z\s\(\)]+$");
+            exprPattern = new Regex(@"^[\p{L}\p{N}\p{P}\s\(\)]+$");
+        }
+
+        private string NthLatinLetter(int id)
+        {
+            if (id < 0 & id > 25)
+                throw new IndexOutOfRangeException("Expected id in range [0, 25]");
+
+            var result = "";
+            var ch = (char)('a' + id);
+
+            result += ch;
+
+            return result;
+        }
+
+        private string ReplaceParameters(string transformed, bool useAlphabet = false)
+        {
+            var parameters = Parameters.OrderByDescending(p => p.Length).ToArray();
+            var result = transformed;
+
+            for (var i = 0; i < parameters.Length; i++)
+            {
+                if (parameters.Length < 26 && useAlphabet)
+                {
+                    var letter = NthLatinLetter(i).ToUpper();
+                    result = result.Replace(parameters[i], letter);
+                    parameters[i] = letter;
+                }
+                else
+                {
+                    var label = $"P{i}";
+                    result = result.Replace(parameters[i], label);
+                    parameters[i] = label;
+                }
+            }
+
+            _parameters = parameters;
+
+            return result;
         }
 
         /// <summary>
@@ -59,6 +98,8 @@ namespace mat_deskretna
                         .Sanitize()
                         .ToUpper()
                         .ReplaceAll(operatorMap);
+
+                    _transformed = ReplaceParameters(_transformed, useAlphabet: true);
                 }
 
                 return _transformed;
