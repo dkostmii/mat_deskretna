@@ -67,6 +67,13 @@ namespace mat_deskretna
             return result;
         }
 
+        /// <summary>
+        /// Finds indices of all elements, satifying <paramref name="pred"/>
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="arr"></param>
+        /// <param name="pred"></param>
+        /// <returns></returns>
         public static int[] FindAllIndices<T>(this T[] arr, Predicate<T> pred)
         {
             var result = new List<int>();

@@ -18,6 +18,12 @@ namespace mat_deskretna
             return s.CollapseWhitespaces().Trim();
         }
 
+        /// <summary>
+        /// Replaces all keys within <paramref name="tokenMap"/> in string with corresponding values.
+        /// </summary>
+        /// <param name="s"></param>
+        /// <param name="tokenMap"></param>
+        /// <returns></returns>
         public static string ReplaceAll(this string s, IDictionary<string, string> tokenMap)
         {
             var result = s;
@@ -32,11 +38,22 @@ namespace mat_deskretna
             return result;
         }
 
+        /// <summary>
+        /// Remove punctuation from string.
+        /// </summary>
+        /// <param name="s"></param>
+        /// <returns></returns>
         public static string RemovePunctuation(this string s)
         {
             return new Regex(@"\p{P}").Replace(s, "");
         }
 
+        /// <summary>
+        /// Surrounds string with <paramref name="surrounding"/>.
+        /// </summary>
+        /// <param name="s"></param>
+        /// <param name="surrounding"></param>
+        /// <returns></returns>
         public static string Surround(this string s, string surrounding)
         {
             if (s.Length == 0)
@@ -45,6 +62,13 @@ namespace mat_deskretna
             return surrounding + s + surrounding;
         }
 
+        /// <summary>
+        /// Splits a string, but keeps all <paramref name="separators"/> in place.
+        /// </summary>
+        /// <param name="s"></param>
+        /// <param name="separators"></param>
+        /// <param name="options"></param>
+        /// <returns></returns>
         public static string[] SplitAndKeep(this string s, string[] separators, StringSplitOptions options = StringSplitOptions.None)
         {
             separators = separators

@@ -78,7 +78,6 @@ namespace mat_deskretna
             try
             {
                 var sentence = BooleanSentence.From(text.Text);
-                Console.WriteLine(sentence.Transformed);
 
                 if (sentence.Parameters.Length != 3)
                 {

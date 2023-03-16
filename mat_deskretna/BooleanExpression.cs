@@ -7,6 +7,13 @@ using ValueOf;
 
 namespace mat_deskretna
 {
+    /// <summary>
+    /// This class prepares boolean expression in string for usage in
+    /// <see cref="DynamicExpresso.Interpreter"/>.
+    /// <br></br>
+    /// <br></br>
+    /// Call <see cref="ValueOf.ValueOf{TValue, TThis}.From(TValue)"/> method of this class to parse expression.
+    /// </summary>
     internal class BooleanExpression : ValueOf<string, BooleanExpression>
     {
         public const string AND = "AND";
@@ -36,6 +43,12 @@ namespace mat_deskretna
             exprPattern = new Regex(@"^[A-Za-z\s\(\)]+$");
         }
 
+        /// <summary>
+        /// Represents boolean expression, that <see cref="DynamicExpresso.Interpreter"/> can parse.
+        /// <br></br>
+        /// <br></br>
+        /// This expression is a valid C# code.
+        /// </summary>
         public string Transformed
         {
             get

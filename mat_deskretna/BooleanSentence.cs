@@ -6,6 +6,14 @@ using ValueOf;
 
 namespace mat_deskretna
 {
+    /// <summary>
+    /// This class parses boolean sentence in Polish language
+    /// by transforming it into string, valid for <see cref="BooleanExpression"/>.
+    /// <br></br>
+    /// <br></br>
+    /// Call <see cref="ValueOf.ValueOf{TValue, TThis}.From(TValue)"/> method of this class to parse sentence
+    /// and pass the result of this method to same method under <see cref="BooleanExpression"/>.
+    /// </summary>
     internal class BooleanSentence : ValueOf<string, BooleanSentence>
     {
         private readonly IDictionary<string, string> wordMap;
@@ -60,6 +68,10 @@ namespace mat_deskretna
             return string.Join("", result);
         }
 
+        /// <summary>
+        /// Represents a string, valid for <see cref="BooleanExpression"/>'s
+        /// <see cref="ValueOf.ValueOf{TValue, TThis}.From(TValue)"/> method.
+        /// </summary>
         public string Transformed
         {
             get
