@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DynamicExpresso;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -18,8 +19,15 @@ namespace mat_deskretna
             InitializeComponent();
         }
 
-        private DataTable CreateTruthTable(string part1, string part2, string part3)
+        private DataTable CreateTruthTable(BooleanExpression expr)
         {
+            var interpreter = new Interpreter();
+
+            if (expr.Parameters.Length != 3)
+            {
+                throw new Exception("Expected expression with 3 parameters. For example, \"A OR B AND C\".");
+            }
+
             // создаем новую таблицу
             DataTable table = new DataTable();
 
@@ -43,7 +51,7 @@ namespace mat_deskretna
             }
 
             // вычисляем результат для каждой комбинации переменных
-            foreach (bool[] row in values)
+            foreach (var row in values.GetAllRows())
             {
                 bool a = row[0];
                 bool b = row[1];
@@ -51,18 +59,12 @@ namespace mat_deskretna
                 bool result;
 
                 // вычисляем логическое выражение
-                if (part3 == "AND")
+                result = interpreter.Eval<bool>(expr.Transformed, new[]
                 {
-                    result = (a && b) || !c;
-                }
-                else if (part3 == "OR")
-                {
-                    result = (a || b) || !c;
-                }
-                else // part3 == "XOR"
-                {
-                    result = (a ^ b) || !c;
-                }
+                    new Parameter("A", a),
+                    new Parameter("B", b),
+                    new Parameter("C", c)
+                });
 
                 // добавляем строку с результатом в таблицу
                 table.Rows.Add(a, b, c, result);
@@ -71,17 +73,23 @@ namespace mat_deskretna
             return table;
         }
 
-
         private void Go_button_Click(object sender, EventArgs e)
         {
-            string text_start = text.Text;
-            string[] result = text_start.Split(new string[] { "nie", "jeśli", "to", "i", "lub" }, StringSplitOptions.RemoveEmptyEntries);
-
             try
             {
-                p_label.Text = "p = " + result[0];
-                q_label.Text = "q = " + result[1];
-                r_label.Text = "r = " + result[2];
+                var sentence = BooleanSentence.From(text.Text);
+
+                if (sentence.Parameters.Length != 3)
+                {
+                    throw new Exception("Expected sentence with 3 parameters. For example, \"a lub b i c\".");
+                }
+
+                var expr = BooleanExpression.From(sentence.Transformed);
+                var interpreter = new Interpreter();
+
+                p_label.Text = "p = " + sentence.Parameters[0];
+                q_label.Text = "q = " + sentence.Parameters[1];
+                r_label.Text = "r = " + sentence.Parameters[2];
 
                 rezalt_panal.Visible = true;
                 panal_p_q_r.Visible = true;
@@ -90,7 +98,7 @@ namespace mat_deskretna
                 bool A = true; // значение первой переменной
                 bool B = false; // значение второй переменной
                 bool C = true; // значение третьей переменной
-                bool result_; // результат логического уравнения
+                bool result; // результат логического уравнения
 
                 // создание таблицы и заполнение ее данными
                 DataTable table = new DataTable();
@@ -105,9 +113,16 @@ namespace mat_deskretna
                     A = (i & 4) != 0;
                     B = (i & 2) != 0;
                     C = (i & 1) != 0;
-                    result_ = A && B || !C;
+                    //result_ = A && B || !C;
 
-                    table.Rows.Add(A, B, C, result_);
+                    result = interpreter.Eval<bool>(expr.Transformed, new[]
+                    {
+                        new Parameter(expr.Parameters[0], A),
+                        new Parameter(expr.Parameters[1], B),
+                        new Parameter(expr.Parameters[2], C),
+                    });
+
+                    table.Rows.Add(A, B, C, result);
                 }
 
                 // вывод таблицы в DataGridView
@@ -120,9 +135,7 @@ namespace mat_deskretna
                 pictureBox1.Visible = false;
 
                 MessageBox.Show("Coś jest nie tak z tekstem, sprawdź go.", "Error!");
-
             }
-
         }
 
 
@@ -156,7 +169,8 @@ namespace mat_deskretna
             dataGridView1.Columns.Add(columnResult);
 
             // создаем таблицу логического уравнения
-            DataTable table = CreateTruthTable("A AND B OR NOT C");
+            var expr = BooleanExpression.From("A AND B OR NOT C");
+            DataTable table = CreateTruthTable(expr);
 
             // привязываем таблицу к DataGridView
             dataGridView1.DataSource = table;
