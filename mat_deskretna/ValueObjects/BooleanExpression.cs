@@ -63,7 +63,7 @@ namespace mat_deskretna.ValueObjects
 
         private string ReplaceParameters(string transformed, bool useAlphabet = false)
         {
-            var parameters = Parameters.OrderByDescending(p => p.Length).ToArray();
+            var parameters = Parameters;
             var result = transformed;
 
             for (var i = 0; i < parameters.Length; i++)
