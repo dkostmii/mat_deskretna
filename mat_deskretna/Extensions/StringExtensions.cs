@@ -4,7 +4,7 @@ using System.Linq;
 using System.Windows.Forms.VisualStyles;
 using System;
 
-namespace mat_deskretna
+namespace mat_deskretna.Extensions
 {
     internal static class StringExtensions
     {

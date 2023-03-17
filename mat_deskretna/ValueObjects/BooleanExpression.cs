@@ -1,18 +1,19 @@
-﻿using System;
+﻿using mat_deskretna.Extensions;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using ValueOf;
 
-namespace mat_deskretna
+namespace mat_deskretna.ValueObjects
 {
     /// <summary>
     /// This class prepares boolean expression in string for usage in
     /// <see cref="DynamicExpresso.Interpreter"/>.
     /// <br></br>
     /// <br></br>
-    /// Call <see cref="ValueOf.ValueOf{TValue, TThis}.From(TValue)"/> method of this class to parse expression.
+    /// Call <see cref="ValueOf{TValue, TThis}.From(TValue)"/> method of this class to parse expression.
     /// </summary>
     internal class BooleanExpression : ValueOf<string, BooleanExpression>
     {
@@ -20,6 +21,8 @@ namespace mat_deskretna
         public const string OR = "OR";
         public const string XOR = "XOR";
         public const string NOT = "NOT";
+        public const string GroupStart = "(";
+        public const string GroupEnd = ")";
 
         private readonly IDictionary<string, string> operatorMap;
         private readonly Regex exprPattern;
@@ -34,7 +37,9 @@ namespace mat_deskretna
                 { AND, "&&" },
                 { OR, "||" },
                 { XOR, "^" },
-                { NOT, "!" }
+                { NOT, "!" },
+                { GroupStart, GroupStart },
+                { GroupEnd, GroupEnd }
             };
 
             _transformed = "";
@@ -100,6 +105,8 @@ namespace mat_deskretna
                         .ReplaceAll(operatorMap);
 
                     _transformed = ReplaceParameters(_transformed, useAlphabet: true);
+
+                    _transformed = _transformed.Sanitize();
                 }
 
                 return _transformed;

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace mat_deskretna
+namespace mat_deskretna.Extensions
 {
     internal static class ArrayExtensions
     {
@@ -31,7 +31,7 @@ namespace mat_deskretna
         /// <returns></returns>
         public static T[] GetRow<T>(this T[,] matrix, int nthRow)
         {
-            ValidateMatrix<T>(matrix);
+            matrix.ValidateMatrix();
 
             var columnCount = matrix.GetLength(1);
 
@@ -53,7 +53,7 @@ namespace mat_deskretna
         /// <returns>An <see cref="IEnumerable{T[]}"/></returns>
         public static IEnumerable<T[]> GetAllRows<T>(this T[,] matrix)
         {
-            ValidateMatrix<T>(matrix);
+            matrix.ValidateMatrix();
 
             var rowCount = matrix.GetLength(0);
 
@@ -61,7 +61,7 @@ namespace mat_deskretna
 
             for (var i = 0; i < rowCount; i++)
             {
-                result.Add(GetRow<T>(matrix, i));
+                result.Add(matrix.GetRow(i));
             }
 
             return result;

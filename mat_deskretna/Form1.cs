@@ -1,4 +1,6 @@
 ﻿using DynamicExpresso;
+using mat_deskretna.Extensions;
+using mat_deskretna.ValueObjects;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;

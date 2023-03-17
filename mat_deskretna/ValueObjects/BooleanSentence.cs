@@ -3,20 +3,24 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Linq;
 using ValueOf;
+using System.Data;
+using mat_deskretna.Extensions;
+using mat_deskretna.Strategies.BooleanSentence;
 
-namespace mat_deskretna
+namespace mat_deskretna.ValueObjects
 {
     /// <summary>
     /// This class parses boolean sentence in Polish language
     /// by transforming it into string, valid for <see cref="BooleanExpression"/>.
     /// <br></br>
     /// <br></br>
-    /// Call <see cref="ValueOf.ValueOf{TValue, TThis}.From(TValue)"/> method of this class to parse sentence
+    /// Call <see cref="ValueOf{TValue, TThis}.From(TValue)"/> method of this class to parse sentence
     /// and pass the result of this method to same method under <see cref="BooleanExpression"/>.
     /// </summary>
     internal class BooleanSentence : ValueOf<string, BooleanSentence>
     {
         private readonly IDictionary<string, string> wordMap;
+        private readonly IEnumerable<IMappingStrategy> mappingStrategies;
         private readonly Regex sentencePattern;
 
         private string _transformed;
@@ -35,10 +39,13 @@ namespace mat_deskretna
                 { "to", BooleanExpression.OR },
                 { "wtedy i tylko wtedy", BooleanExpression.XOR }
             }.Select(kv =>
-            {
-                return KeyValuePair.Create(kv.Key.Surround(" "), kv.Value.Surround(" "));
-            })
+                KeyValuePair.Create(kv.Key.Surround(" "), kv.Value.Surround(" ")))
             .ToDictionary(kv => kv.Key, kv => kv.Value);
+
+            mappingStrategies = new List<IMappingStrategy>
+            {
+                new BiconditionalNearestStrategy(wordMap.Values)
+            };
 
             sentencePattern = new Regex(@"^[\p{L}\p{N}\p{P}\s\(\)]+$");
 
@@ -46,35 +53,17 @@ namespace mat_deskretna
             _parameters = Array.Empty<string>();
         }
 
-        private string HandleXorTokens(string transformed)
+        private string ApplyMappingStrategies(string transformed)
         {
-            var split = transformed.SplitAndKeep(wordMap.Values.ToArray(), StringSplitOptions.RemoveEmptyEntries);
-
-            var xorIndices = split.FindAllIndices(token => token.Contains(BooleanExpression.XOR));
-
-            if (xorIndices.Length == 0)
-                return transformed;
-
-            var result = Array.Empty<string>();
-
-            foreach (var id in xorIndices)
+            return mappingStrategies.Aggregate(transformed, (acc, val) =>
             {
-                var before = split
-                    .Take(id - 1)
-                    .Concat(new[] { BooleanExpression.NOT.Surround(" "), split[id - 1] });
-
-                var after = new[] { split[id], BooleanExpression.NOT.Surround(" "), split[id + 1] }
-                    .Concat(split.Skip(id + 2));
-
-                result = before.Concat(after).ToArray();
-            }
-
-            return string.Join("", result);
+                return val.HandleSentence(acc);
+            });
         }
 
         /// <summary>
         /// Represents a string, valid for <see cref="BooleanExpression"/>'s
-        /// <see cref="ValueOf.ValueOf{TValue, TThis}.From(TValue)"/> method.
+        /// <see cref="ValueOf{TValue, TThis}.From(TValue)"/> method.
         /// </summary>
         public string Transformed
         {
@@ -88,7 +77,7 @@ namespace mat_deskretna
                         .ToLower()
                         .ReplaceAll(wordMap);
 
-                    _transformed = HandleXorTokens(_transformed);
+                    _transformed = ApplyMappingStrategies(_transformed);
                 }
 
                 return _transformed;
