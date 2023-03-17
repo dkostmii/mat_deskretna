@@ -82,7 +82,7 @@ namespace mat_deskretna.Extensions
 
             var separatorPatterns = separators.Select(sep =>
             {
-                var pattern = new Regex($"(?<!{arbitrarySep}){sep}(?!{arbitrarySep})");
+                var pattern = new Regex($"(?<!{Regex.Escape(arbitrarySep)}){Regex.Escape(sep)}(?!{Regex.Escape(arbitrarySep)})");
                 return (sep, pattern);
             });
 
@@ -93,6 +93,39 @@ namespace mat_deskretna.Extensions
 
             return separated
                 .Split(arbitrarySep, options);
+        }
+
+        public static string MergeLeftAt(this string s, string substring)
+        {
+            return new Regex(@$"\s+{Regex.Escape(substring)}").Replace(s, substring);
+        }
+
+        public static string MergeRightAt(this string s, string substring)
+        {
+            return new Regex(@$"{Regex.Escape(substring)}\s+").Replace(s, substring);
+        }
+
+        public static string MergeAt(this string s, string substring)
+        {
+            return new Regex(@$"\s*{Regex.Escape(substring)}\s*").Replace(s, substring);
+        }
+
+        public static string MergeAt(this string s, string[] substrings)
+        {
+            return substrings.Aggregate(s, (acc, val) =>
+                MergeAt(acc, val));
+        }
+
+        public static string MergeLeftAt(this string s, string[] substrings)
+        {
+            return substrings.Aggregate(s, (acc, val) =>
+                MergeLeftAt(acc, val));
+        }
+
+        public static string MergeRightAt(this string s, string[] substrings)
+        {
+            return substrings.Aggregate(s, (acc, val) =>
+                MergeRightAt(acc, val));
         }
     }
 }

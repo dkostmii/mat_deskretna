@@ -20,7 +20,7 @@ namespace mat_deskretna.ValueObjects
     internal class BooleanSentence : ValueOf<string, BooleanSentence>
     {
         private readonly IDictionary<string, string> wordMap;
-        private readonly IEnumerable<IMappingStrategy> mappingStrategies;
+        private readonly IEnumerable<IBooleanSentenceMappingStrategy> mappingStrategies;
         private readonly Regex sentencePattern;
 
         private string _transformed;
@@ -42,9 +42,9 @@ namespace mat_deskretna.ValueObjects
                 KeyValuePair.Create(kv.Key.Surround(" "), kv.Value.Surround(" ")))
             .ToDictionary(kv => kv.Key, kv => kv.Value);
 
-            mappingStrategies = new List<IMappingStrategy>
+            mappingStrategies = new List<IBooleanSentenceMappingStrategy>
             {
-                new BiconditionalNearestStrategy(wordMap.Values)
+                new BiconditionalFullStrategy(wordMap.Values)
             };
 
             sentencePattern = new Regex(@"^[\p{L}\p{N}\p{P}\s\(\)]+$");
@@ -55,10 +55,11 @@ namespace mat_deskretna.ValueObjects
 
         private string ApplyMappingStrategies(string transformed)
         {
-            return mappingStrategies.Aggregate(transformed, (acc, val) =>
-            {
-                return val.HandleSentence(acc);
-            });
+            return mappingStrategies
+                .Aggregate(
+                    transformed,
+                    (acc, val) => val.HandleSentence(acc)
+                );
         }
 
         /// <summary>

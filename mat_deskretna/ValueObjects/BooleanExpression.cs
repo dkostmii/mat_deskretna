@@ -1,6 +1,5 @@
 ﻿using mat_deskretna.Extensions;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -87,6 +86,16 @@ namespace mat_deskretna.ValueObjects
             return result;
         }
 
+        private string SanitizeTransformed(string transformed)
+        {
+            return transformed
+                .Sanitize()
+                .MergeRightAt(
+                    new[] { NOT, GroupStart }
+                        .Select(k => operatorMap[k]).ToArray())
+                .MergeLeftAt(operatorMap[GroupEnd]);
+        }
+
         /// <summary>
         /// Represents boolean expression, that <see cref="DynamicExpresso.Interpreter"/> can parse.
         /// <br></br>
@@ -106,7 +115,7 @@ namespace mat_deskretna.ValueObjects
 
                     _transformed = ReplaceParameters(_transformed, useAlphabet: true);
 
-                    _transformed = _transformed.Sanitize();
+                    _transformed = SanitizeTransformed(_transformed);
                 }
 
                 return _transformed;

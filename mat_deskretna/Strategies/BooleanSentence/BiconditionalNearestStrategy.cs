@@ -6,34 +6,28 @@ using System.Linq;
 
 namespace mat_deskretna.Strategies.BooleanSentence
 {
-    internal class BiconditionalNearestStrategy : IMappingStrategy
+    internal class BiconditionalNearestStrategy : BiconditionalStrategy
     {
-        private readonly string[] _boolOperators;
+        public BiconditionalNearestStrategy(IEnumerable<string> boolOperators) : base(boolOperators)
+        { }
 
-        public BiconditionalNearestStrategy(IEnumerable<string> boolOperators)
+        public override string HandleSentence(string sentence)
         {
-            _boolOperators = boolOperators.ToArray();
-        }
+            var result = SplitSentence(sentence);
 
-        public string HandleSentence(string sentence)
-        {
-            var split = sentence.SplitAndKeep(_boolOperators, StringSplitOptions.RemoveEmptyEntries);
-
-            var xorIndices = split.FindAllIndices(token => token.Contains(BooleanExpression.XOR));
+            var xorIndices = FindXorIndices(result);
 
             if (xorIndices.Length == 0)
                 return sentence;
 
-            var result = Array.Empty<string>();
-
             foreach (var id in xorIndices)
             {
-                var before = split
+                var before = result
                     .Take(id - 1)
-                    .Concat(new[] { BooleanExpression.NOT + BooleanExpression.GroupStart.Surround(" "), split[id - 1] });
+                    .Concat(new[] { BooleanExpression.NOT + BooleanExpression.GroupStart.Surround(" "), result[id - 1] });
 
-                var after = new[] { split[id], split[id + 1] + BooleanExpression.GroupEnd.Surround(" ") }
-                    .Concat(split.Skip(id + 2));
+                var after = new[] { result[id], result[id + 1] + BooleanExpression.GroupEnd.Surround(" ") }
+                    .Concat(result.Skip(id + 2));
 
                 result = before.Concat(after).ToArray();
             }
