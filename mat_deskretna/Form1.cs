@@ -2,14 +2,7 @@
 using mat_deskretna.Extensions;
 using mat_deskretna.ValueObjects;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
-using System.DirectoryServices.ActiveDirectory;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace mat_deskretna
@@ -21,7 +14,7 @@ namespace mat_deskretna
             InitializeComponent();
         }
 
-        private DataTable CreateTruthTable(BooleanExpression expr)
+        private void CreateAndBindTruthTable(BooleanExpression expr, DataGridView gridView)
         {
             var interpreter = new Interpreter();
 
@@ -38,6 +31,35 @@ namespace mat_deskretna
             table.Columns.Add(expr.Parameters[1], typeof(bool));
             table.Columns.Add(expr.Parameters[2], typeof(bool));
             table.Columns.Add("Result", typeof(bool));
+
+            // настраиваем DataGridView
+            dataGridView1.AutoGenerateColumns = false;
+            dataGridView1.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+
+            // создаем столбцы для отображения данных
+            DataGridViewTextBoxColumn columnA = new DataGridViewTextBoxColumn();
+            columnA.DataPropertyName = expr.Parameters[0];
+            columnA.HeaderText = expr.Parameters[0];
+
+            DataGridViewTextBoxColumn columnB = new DataGridViewTextBoxColumn();
+            columnB.DataPropertyName = expr.Parameters[1];
+            columnB.HeaderText = expr.Parameters[1];
+
+            DataGridViewTextBoxColumn columnC = new DataGridViewTextBoxColumn();
+            columnC.DataPropertyName = expr.Parameters[2];
+            columnC.HeaderText = expr.Parameters[2];
+
+            DataGridViewTextBoxColumn columnResult = new DataGridViewTextBoxColumn();
+            columnResult.DataPropertyName = "Result";
+            columnResult.HeaderText = "Result";
+
+            gridView.Columns.Clear();
+
+            // добавляем столбцы в DataGridView
+            gridView.Columns.Add(columnA);
+            gridView.Columns.Add(columnB);
+            gridView.Columns.Add(columnC);
+            gridView.Columns.Add(columnResult);
 
             // создаем массив значений для всех возможных комбинаций переменных
             int numRows = 8;
@@ -72,7 +94,7 @@ namespace mat_deskretna
                 table.Rows.Add(a, b, c, result);
             }
 
-            return table;
+            gridView.DataSource = table;
         }
 
         private void Go_button_Click(object sender, EventArgs e)
@@ -88,52 +110,19 @@ namespace mat_deskretna
 
                 var expr = BooleanExpression.From(sentence.Transformed);
 
-                // FIXME: Convert getter to method
-                var exprTransformed = expr.Transformed;
-                var exprParameters = expr.Parameters;
-
                 var interpreter = new Interpreter();
 
-                p_label.Text = exprParameters[0] + " = " + sentence.Parameters[0];
-                q_label.Text = exprParameters[1] + " = " + sentence.Parameters[1];
-                r_label.Text = exprParameters[2] + " = " + sentence.Parameters[2];
+                p_label.Text = expr.Parameters[0] + " = " + sentence.Parameters[0];
+                q_label.Text = expr.Parameters[1] + " = " + sentence.Parameters[1];
+                r_label.Text = expr.Parameters[2] + " = " + sentence.Parameters[2];
+
+                rezalt_text.Text = expr.Transformed;
 
                 rezalt_panal.Visible = true;
                 panal_p_q_r.Visible = true;
                 pictureBox1.Visible = true;
 
-                bool A = true; // значение первой переменной
-                bool B = false; // значение второй переменной
-                bool C = true; // значение третьей переменной
-                bool result; // результат логического уравнения
-
-                // создание таблицы и заполнение ее данными
-                DataTable table = new DataTable();
-                table.Columns.Add(exprParameters[0], typeof(bool));
-                table.Columns.Add(exprParameters[1], typeof(bool));
-                table.Columns.Add(exprParameters[2], typeof(bool));
-                table.Columns.Add("Result", typeof(bool));
-
-                // вычисление значения логического уравнения для всех комбинаций значений переменных A, B, и C
-                for (int i = 0; i < 8; i++)
-                {
-                    A = (i & 4) != 0;
-                    B = (i & 2) != 0;
-                    C = (i & 1) != 0;
-                    rezalt_text.Text = exprTransformed;
-
-                    result = interpreter.Eval<bool>(exprTransformed, new[]
-                    {
-                        new Parameter(exprParameters[0], A),
-                        new Parameter(exprParameters[1], B),
-                        new Parameter(exprParameters[2], C),
-                    });
-
-                    table.Rows.Add(A, B, C, result);
-                }
-
-                // вывод таблицы в DataGridView
-                dataGridView1.DataSource = table;
+                CreateAndBindTruthTable(expr, dataGridView1);
             }
             catch
             {
@@ -145,43 +134,11 @@ namespace mat_deskretna
             }
         }
 
-
         private void Form1_Load(object sender, EventArgs e)
         {
-            // настраиваем DataGridView
-            dataGridView1.AutoGenerateColumns = false;
-            dataGridView1.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-
-            // создаем столбцы для отображения данных
-            DataGridViewTextBoxColumn columnA = new DataGridViewTextBoxColumn();
-            columnA.DataPropertyName = "A";
-            columnA.HeaderText = "A";
-
-            DataGridViewTextBoxColumn columnB = new DataGridViewTextBoxColumn();
-            columnB.DataPropertyName = "B";
-            columnB.HeaderText = "B";
-
-            DataGridViewTextBoxColumn columnC = new DataGridViewTextBoxColumn();
-            columnC.DataPropertyName = "C";
-            columnC.HeaderText = "C";
-
-            DataGridViewTextBoxColumn columnResult = new DataGridViewTextBoxColumn();
-            columnResult.DataPropertyName = "Result";
-            columnResult.HeaderText = "Result";
-
-            // добавляем столбцы в DataGridView
-            dataGridView1.Columns.Add(columnA);
-            dataGridView1.Columns.Add(columnB);
-            dataGridView1.Columns.Add(columnC);
-            dataGridView1.Columns.Add(columnResult);
-
             // создаем таблицу логического уравнения
             var expr = BooleanExpression.From("A AND B OR NOT C");
-            DataTable table = CreateTruthTable(expr);
-
-            // привязываем таблицу к DataGridView
-            dataGridView1.DataSource = table;
+            CreateAndBindTruthTable(expr, dataGridView1);
         }
-
     }
 }

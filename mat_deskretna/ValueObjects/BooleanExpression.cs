@@ -1,9 +1,13 @@
 ﻿using mat_deskretna.Extensions;
+using mat_deskretna.Strategies;
+using mat_deskretna.Strategies.BooleanExpression;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using ValueOf;
+
+using static mat_deskretna.Extensions.StringExtensions;
 
 namespace mat_deskretna.ValueObjects
 {
@@ -14,7 +18,7 @@ namespace mat_deskretna.ValueObjects
     /// <br></br>
     /// Call <see cref="ValueOf{TValue, TThis}.From(TValue)"/> method of this class to parse expression.
     /// </summary>
-    internal class BooleanExpression : ValueOf<string, BooleanExpression>
+    internal class BooleanExpression : ValueOf<string, BooleanExpression>, ITransformedStrategyConsumer
     {
         public const string AND = "AND";
         public const string OR = "OR";
@@ -29,6 +33,8 @@ namespace mat_deskretna.ValueObjects
         private string _transformed;
         private string[] _parameters;
 
+        public IEnumerable<ITransformedStrategy> TransformedStrategies { get; set; }
+
         public BooleanExpression()
         {
             operatorMap = new Dictionary<string, string>()
@@ -41,59 +47,42 @@ namespace mat_deskretna.ValueObjects
                 { GroupEnd, GroupEnd }
             };
 
+            TransformedStrategies = Enumerable.Empty<ITransformedStrategy>();
+
             _transformed = "";
             _parameters = Array.Empty<string>();
 
             exprPattern = new Regex(@"^[\p{L}\p{N}\p{P}\s\(\)]+$");
         }
 
-        private string NthLatinLetter(int id)
+        public string ApplyTransformedStrategies(string transformed)
         {
-            if (id < 0 & id > 25)
-                throw new IndexOutOfRangeException("Expected id in range [0, 25]");
-
-            var result = "";
-            var ch = (char)('a' + id);
-
-            result += ch;
-
-            return result;
+            return TransformedStrategies
+                .Aggregate(
+                    transformed,
+                    (acc, val) => val.Handle(acc)
+                );
         }
 
-        private string ReplaceParameters(string transformed, bool useAlphabet = false)
+        private void EvalTransformed()
         {
-            var parameters = Parameters;
-            var result = transformed;
+            _transformed = Value
+                        .Sanitize()
+                        .ToUpper()
+                        .ReplaceAll(operatorMap);
 
-            for (var i = 0; i < parameters.Length; i++)
-            {
-                if (parameters.Length < 26 && useAlphabet)
-                {
-                    var letter = NthLatinLetter(i).ToUpper();
-                    result = result.Replace(parameters[i], letter);
-                    parameters[i] = letter;
-                }
-                else
-                {
-                    var label = $"P{i}";
-                    result = result.Replace(parameters[i], label);
-                    parameters[i] = label;
-                }
-            }
-
-            _parameters = parameters;
-
-            return result;
+            _transformed = ApplyTransformedStrategies(_transformed);
         }
 
-        private string SanitizeTransformed(string transformed)
+        private void EvalParameters()
         {
-            return transformed
-                .Sanitize()
-                .MergeRightAt(
-                    new[] { NOT, GroupStart }
-                        .Select(k => operatorMap[k]).ToArray())
-                .MergeLeftAt(operatorMap[GroupEnd]);
+            _parameters = Value
+                       .Sanitize()
+                       .ToUpper()
+                       .Split(operatorMap.Keys.ToArray(), StringSplitOptions.RemoveEmptyEntries)
+                       .Select(p => p.Trim())
+                       .Where(p => p.Length > 0)
+                       .ToArray();
         }
 
         /// <summary>
@@ -107,16 +96,7 @@ namespace mat_deskretna.ValueObjects
             get
             {
                 if (string.IsNullOrEmpty(_transformed))
-                {
-                    _transformed = Value
-                        .Sanitize()
-                        .ToUpper()
-                        .ReplaceAll(operatorMap);
-
-                    _transformed = ReplaceParameters(_transformed, useAlphabet: true);
-
-                    _transformed = SanitizeTransformed(_transformed);
-                }
+                    EvalTransformed();
 
                 return _transformed;
             }
@@ -127,17 +107,16 @@ namespace mat_deskretna.ValueObjects
             get
             {
                 if (_parameters.Length == 0)
-                {
-                    _parameters = Value
-                        .Sanitize()
-                        .ToUpper()
-                        .Split(operatorMap.Keys.ToArray(), StringSplitOptions.RemoveEmptyEntries)
-                        .Select(p => p.Trim())
-                        .Where(p => p.Length > 0)
-                        .ToArray();
-                }
+                    EvalParameters();
 
                 return _parameters;
+            }
+            set
+            {
+                if (value.Length != _parameters.Length)
+                    throw new Exception("Expected value to have same length as _parameters.");
+
+                _parameters = value;
             }
         }
 
@@ -147,6 +126,16 @@ namespace mat_deskretna.ValueObjects
 
             if (!exprPattern.IsMatch(sanitized))
                 throw new InvalidBooleanExpressionException(sanitized);
+
+            EvalParameters();
+
+            TransformedStrategies = new List<ITransformedStrategy>()
+            {
+                new ReplaceParametersUseAlphabeticStrategy(this),
+                new SanitizeTransformedStrategy(operatorMap),
+            };
+
+            EvalTransformed();
         }
     }
 
