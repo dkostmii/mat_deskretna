@@ -6,6 +6,7 @@ using ValueOf;
 using System.Data;
 using mat_deskretna.Extensions;
 using mat_deskretna.Strategies.BooleanSentence;
+using mat_deskretna.Strategies;
 
 namespace mat_deskretna.ValueObjects
 {
@@ -17,32 +18,34 @@ namespace mat_deskretna.ValueObjects
     /// Call <see cref="ValueOf{TValue, TThis}.From(TValue)"/> method of this class to parse sentence
     /// and pass the result of this method to same method under <see cref="BooleanExpression"/>.
     /// </summary>
-    internal class BooleanSentence : ValueOf<string, BooleanSentence>
+    internal class BooleanSentence : ValueOf<string, BooleanSentence>, ITransformedStrategyConsumer
     {
         private readonly IDictionary<string, string> wordMap;
-        private readonly IEnumerable<IBooleanSentenceMappingStrategy> mappingStrategies;
         private readonly Regex sentencePattern;
 
         private string _transformed;
         private string[] _parameters;
 
+        public IEnumerable<ITransformedStrategy> TransformedStrategies { get; set; }
+
         public BooleanSentence()
         {
             wordMap = new Dictionary<string, string>()
             {
-                { "nie", BooleanExpression.NOT },
-                { "i", BooleanExpression.AND },
-                { "lub", BooleanExpression.OR },
-                { "albo", BooleanExpression.OR },
-                { "jeśli", BooleanExpression.NOT },
-                { "jesli", BooleanExpression.NOT },
-                { "to", BooleanExpression.OR },
+                { "nie ", BooleanExpression.NOT },
+                { " i ", BooleanExpression.AND },
+                { " lub ", BooleanExpression.OR },
+                { " albo ", BooleanExpression.OR },
+                { "jeśli ", BooleanExpression.NOT },
+                { "jesli ", BooleanExpression.NOT },
+                { " to ", BooleanExpression.OR },
                 { "wtedy i tylko wtedy", BooleanExpression.XOR }
-            }.Select(kv =>
-                KeyValuePair.Create(kv.Key.Surround(" "), kv.Value.Surround(" ")))
+            }
+            .Select(kv =>
+                KeyValuePair.Create(kv.Key, kv.Value.Surround(" ")))
             .ToDictionary(kv => kv.Key, kv => kv.Value);
 
-            mappingStrategies = new List<IBooleanSentenceMappingStrategy>
+            TransformedStrategies = new List<ITransformedStrategy>
             {
                 new BiconditionalFullStrategy(wordMap.Values)
             };
@@ -53,13 +56,36 @@ namespace mat_deskretna.ValueObjects
             _parameters = Array.Empty<string>();
         }
 
-        private string ApplyMappingStrategies(string transformed)
+        public string ApplyTransformedStrategies(string transformed)
         {
-            return mappingStrategies
+            return TransformedStrategies
                 .Aggregate(
                     transformed,
-                    (acc, val) => val.HandleSentence(acc)
+                    (acc, val) => val.Handle(acc)
                 );
+        }
+
+        private void EvalTransformed()
+        {
+            _transformed = Value
+                        .Sanitize()
+                        .RemovePunctuation()
+                        .ToLower()
+                        .ReplaceAll(wordMap);
+
+            _transformed = ApplyTransformedStrategies(_transformed);
+        }
+
+        private void EvalParameters()
+        {
+            _parameters = Value
+                        .Sanitize()
+                        .RemovePunctuation()
+                        .ToLower()
+                        .Split(wordMap.Keys.ToArray(), StringSplitOptions.RemoveEmptyEntries)
+                        .Select(p => p.Trim())
+                        .Where(p => p.Length > 0)
+                        .ToArray();
         }
 
         /// <summary>
@@ -71,15 +97,7 @@ namespace mat_deskretna.ValueObjects
             get
             {
                 if (string.IsNullOrEmpty(_transformed))
-                {
-                    _transformed = Value
-                        .Sanitize()
-                        .RemovePunctuation()
-                        .ToLower()
-                        .ReplaceAll(wordMap);
-
-                    _transformed = ApplyMappingStrategies(_transformed);
-                }
+                    EvalTransformed();
 
                 return _transformed;
             }
@@ -90,20 +108,12 @@ namespace mat_deskretna.ValueObjects
             get
             {
                 if (_parameters.Length == 0)
-                {
-                    _parameters = Value
-                        .Sanitize()
-                        .RemovePunctuation()
-                        .ToLower()
-                        .Split(wordMap.Keys.ToArray(), StringSplitOptions.RemoveEmptyEntries)
-                        .Select(p => p.Trim())
-                        .Where(p => p.Length > 0)
-                        .ToArray();
-                }
+                    EvalParameters();
 
                 return _parameters;
             }
         }
+
 
         protected override void Validate()
         {
@@ -111,6 +121,9 @@ namespace mat_deskretna.ValueObjects
 
             if (!sentencePattern.IsMatch(sanitized))
                 throw new InvalidBooleanSentenceException(sanitized);
+
+            EvalTransformed();
+            EvalParameters();
         }
     }
 

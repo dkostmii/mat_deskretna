@@ -1,13 +1,11 @@
 ﻿using mat_deskretna.Extensions;
-using mat_deskretna.ValueObjects;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace mat_deskretna.Strategies.BooleanSentence
 {
-    internal abstract class BiconditionalStrategy : IBooleanSentenceMappingStrategy
+    internal abstract class BiconditionalStrategy : ITransformedStrategy
     {
         private readonly string[] _boolOperators;
 
@@ -16,7 +14,7 @@ namespace mat_deskretna.Strategies.BooleanSentence
             _boolOperators = boolOperators.ToArray();
         }
 
-        public abstract string HandleSentence(string sentence);
+        public abstract string Handle(string transformed);
 
         protected string[] SplitSentence(string sentence)
         {
@@ -25,7 +23,22 @@ namespace mat_deskretna.Strategies.BooleanSentence
 
         protected int[] FindXorIndices(string[] split)
         {
-            return split.FindAllIndices(token => token.Contains(BooleanExpression.XOR));
+            return split.FindAllIndices(token => token.Contains(ValueObjects.BooleanExpression.XOR));
+        }
+
+        protected void ValidateXorIndices(int[] newXorIndices, int[] prevXorIndices)
+        {
+            if (newXorIndices.Length != prevXorIndices.Length)
+                throw new Exception($"Expected newXorIndicesLength to be {prevXorIndices.Length}. Got {newXorIndices.Length}.");
+        }
+
+        protected int[] FindAndValidateXorIndices(string[] split, int[] prevXorIndices)
+        {
+            var newXorIndices = FindXorIndices(split);
+
+            ValidateXorIndices(newXorIndices, prevXorIndices);
+
+            return newXorIndices;
         }
     }
 }

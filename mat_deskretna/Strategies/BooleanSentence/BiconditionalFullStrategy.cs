@@ -1,9 +1,6 @@
 ﻿using mat_deskretna.Extensions;
-using mat_deskretna.ValueObjects;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace mat_deskretna.Strategies.BooleanSentence
 {
@@ -12,44 +9,72 @@ namespace mat_deskretna.Strategies.BooleanSentence
         public BiconditionalFullStrategy(IEnumerable<string> boolOperators) : base(boolOperators)
         { }
 
-        public override string HandleSentence(string sentence)
+        private IEnumerable<string> Group(IEnumerable<string> split)
         {
-            var result = SplitSentence(sentence);
+            return split
+                    .Prepend(ValueObjects.BooleanExpression.GroupStart.Surround(" "))
+                    .Append(ValueObjects.BooleanExpression.GroupEnd.Surround(" "));
+        }
+
+        private IEnumerable<string> Negate(IEnumerable<string> split)
+        {
+            var splitCount = split.Count();
+
+            if (splitCount > 1)
+                split = Group(split);
+
+            return split
+                    .Prepend(ValueObjects.BooleanExpression.NOT);
+        }
+
+        public override string Handle(string transformed)
+        {
+            var result = SplitSentence(transformed);
 
             var xorIndices = FindXorIndices(result);
 
             if (xorIndices.Length == 0)
-                return sentence;
-            else if (xorIndices.Length == 1)
+                return transformed;
+
+            for (var i = 0; i <= xorIndices.Length - 1; i++)
             {
-                result = result
-                    .Prepend(BooleanExpression.GroupStart.Surround(" "))
-                    .Prepend(BooleanExpression.NOT)
-                    .Append(BooleanExpression.GroupEnd.Surround(" ")).ToArray();
+                var resultCount = result.Count();
 
-                return string.Join("", result).Sanitize();
+                var currentXorId = xorIndices[i];
+                var nextXorId = xorIndices.Length == 1 ? resultCount - 1 : xorIndices[i + 1];
+
+                var tokensBefore = currentXorId;
+                var tokensAfter = nextXorId - currentXorId;
+
+                var resultBefore = result
+                    .Take(tokensBefore)
+                    .ApplyIf(tokensBefore > 1, Group)
+                    .ToArray();
+
+                var resultAfter = result
+                    .Skip(tokensBefore + 1)
+                    .ApplyIf(tokensAfter > 1, Group)
+                    .ToArray();
+
+                result = resultBefore.Concat(resultAfter.Prepend(result[currentXorId])).ToArray();
+
+                xorIndices = FindAndValidateXorIndices(result, xorIndices);
+
+                resultCount = result.Count();
+                nextXorId = xorIndices.Length == 1 ? resultCount - 1 : xorIndices[i + 1];
+
+                result = Negate(
+                        result.Take(nextXorId))
+                    .Concat(
+                        result.Skip(nextXorId))
+                    .ToArray();
+
+                xorIndices = FindAndValidateXorIndices(result, xorIndices);
             }
-
-            for (var i = 0; i < xorIndices.Length - 1; i++)
-            {
-                result = result
-                    .Take(xorIndices[i + 1])
-                    .Prepend(BooleanExpression.GroupStart.Surround(" "))
-                    .Prepend(BooleanExpression.NOT)
-                    .Append(BooleanExpression.GroupEnd.Surround(" "))
-                    .Concat(result.Skip(xorIndices[i + 1])).ToArray();
-
-                var newXorIndices = FindXorIndices(result);
-
-                if (newXorIndices.Length != xorIndices.Length)
-                    throw new Exception($"Expected newXorIndicesLength to be {xorIndices.Length}. Got {newXorIndices.Length}.");
-
-                xorIndices = FindXorIndices(result);
-            }
+                
+            // A OR B XOR C
 
             return string.Join("", result).Sanitize();
-
-            // NOT (A OR B XOR C AND D) XOR E AND F OR G XOR D
         }
     }
 }

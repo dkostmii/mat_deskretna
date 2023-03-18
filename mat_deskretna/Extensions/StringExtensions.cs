@@ -127,5 +127,18 @@ namespace mat_deskretna.Extensions
             return substrings.Aggregate(s, (acc, val) =>
                 MergeRightAt(acc, val));
         }
+
+        public static string NthLatinLetter(int id)
+        {
+            if (id < 0 & id > 25)
+                throw new IndexOutOfRangeException("Expected id in range [0, 25]");
+
+            var result = "";
+            var ch = (char)('a' + id);
+
+            result += ch;
+
+            return result;
+        }
     }
 }
